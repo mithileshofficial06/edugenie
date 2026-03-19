@@ -1,0 +1,144 @@
+@import "tailwindcss";
+
+/* ===== Design Tokens ===== */
+@theme {
+  --color-bg: #0a0a0a;
+  --color-card: #111111;
+  --color-input: #1a1a1a;
+  --color-border: #333333;
+  --color-text: #ffffff;
+  --color-muted: #888888;
+  --color-cyan: #00ffff;
+  --color-purple: #8b5cf6;
+  --color-green: #00ff88;
+  --color-yellow: #ffd700;
+  --color-red: #ff3333;
+}
+
+/* ===== Base ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: 16px;
+  line-height: 1.6;
+  overflow-x: hidden;
+  background-image: radial-gradient(var(--color-muted) 0.5px, transparent 0.5px);
+  background-size: 20px 20px;
+}
+
+/* ===== Container ===== */
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+  width: 100%;
+}
+
+/* ===== Ticker ===== */
+@keyframes ticker-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.ticker-bar {
+  height: 40px;
+  overflow: hidden;
+  background: var(--color-yellow);
+  border-bottom: 2px solid #fff;
+  border-top: 2px solid #fff;
+  display: flex;
+  align-items: center;
+}
+.ticker-track {
+  display: flex;
+  width: max-content;
+  animation: ticker-scroll 30s linear infinite;
+}
+.ticker-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 24px;
+  font-size: 13px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #000;
+  white-space: nowrap;
+}
+.ticker-dot {
+  width: 8px; height: 8px;
+  border: 2px solid #000;
+  flex-shrink: 0;
+}
+.ticker-sep {
+  color: rgba(0,0,0,0.25);
+  font-weight: 900;
+  padding: 0 4px;
+}
+
+/* ===== Inputs ===== */
+.brutal-input {
+  width: 100%;
+  height: 48px;
+  padding: 0 12px;
+  background: var(--color-input);
+  border: 2px solid var(--color-border);
+  color: #fff;
+  font-family: inherit;
+  font-size: 14px;
+  border-radius: 0;
+  transition: border-color .2s, box-shadow .2s, transform .15s;
+}
+.brutal-input:focus {
+  outline: none;
+  border-color: var(--color-cyan);
+  box-shadow: 3px 3px 0 var(--color-cyan);
+  transform: translate(-1px, -1px);
+}
+.brutal-input::placeholder {
+  color: var(--color-muted);
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+/* ===== Button ===== */
+.brutal-btn {
+  width: 100%;
+  height: 52px;
+  background: var(--color-cyan);
+  color: #000;
+  border: 2px solid #000;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-radius: 0;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 var(--color-purple);
+  transition: transform .12s, box-shadow .12s;
+}
+.brutal-btn:hover:not(:disabled) {
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0 var(--color-purple);
+}
+.brutal-btn:active:not(:disabled) {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 var(--color-purple);
+}
+.brutal-btn:disabled {
+  background: #333; color: #666;
+  border-color: #555; box-shadow: none;
+  cursor: not-allowed; transform: none;
+}
+
+/* ===== Card shadow helpers ===== */
+.shadow-cyan   { box-shadow: 3px 3px 0 var(--color-cyan); }
+.shadow-purple { box-shadow: 3px 3px 0 var(--color-purple); }
+.shadow-green  { box-shadow: 3px 3px 0 var(--color-green); }
+.shadow-yellow { box-shadow: 3px 3px 0 var(--color-yellow); }
+.shadow-white  { box-shadow: 3px 3px 0 #fff; }
