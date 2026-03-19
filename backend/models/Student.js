@@ -9,6 +9,10 @@ const studentSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  email: {
+    type: String,
+    required: true
+  },
   moodleUrl: {
     type: String,
     default: 'https://moodle.licet.ac.in'
@@ -16,6 +20,18 @@ const studentSchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: true
+  },
+  semesterStart: {
+    type: Date,
+    required: true
+  },
+  semesterEnd: {
+    type: Date,
+    required: true
+  },
+  selectedCourseIds: {
+    type: [String],
+    default: []
   },
   registeredAt: {
     type: Date,

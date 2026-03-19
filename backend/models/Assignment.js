@@ -17,9 +17,10 @@ const assignmentSchema = new mongoose.Schema({
   courseName: String,
   type: {
     type: String,
-    enum: ['assignment', 'quiz', 'notes'],
+    enum: ['assignment', 'quiz', 'notes', 'resource'],
     default: 'assignment'
   },
+  resourceUrl: String,
   isNotified: {
     type: Boolean,
     default: false

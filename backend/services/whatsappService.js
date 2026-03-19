@@ -9,7 +9,6 @@ const client = twilio(
 
 const sendWhatsApp = async (to, message) => {
   try {
-    // Truncate message if it exceeds WhatsApp's 1600 char limit
     const truncatedMsg = message.length > 1500
       ? message.substring(0, 1497) + '...'
       : message;
@@ -30,109 +29,81 @@ const sendWhatsApp = async (to, message) => {
   }
 };
 
+const formatDate = (date) => {
+  if (!date) return 'No deadline set';
+  const d = new Date(date);
+  return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+};
+
+const formatTime = (date) => {
+  if (!date) return '';
+  const d = new Date(date);
+  return d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+};
+
 const sendAssignmentAlert = async (to, assignment, studyMaterial) => {
-  const dueDate = assignment.dueDate
-    ? new Date(assignment.dueDate).toLocaleDateString('en-IN')
-    : 'No deadline set';
+  const due = formatDate(assignment.dueDate);
 
-  const message = `
-🧞 *EduGenie Alert!*
+  const message = studyMaterial
+    ? `\u{1F9DE} EDUGENIE\n\nNEW ASSIGNMENT DETECTED\n${assignment.title}\nCourse: ${assignment.courseName}\nDue: ${due}\n\n${studyMaterial}`
+    : `\u{1F9DE} EDUGENIE\n\nNEW ASSIGNMENT DETECTED\n${assignment.title}\nCourse: ${assignment.courseName}\nDue: ${due}\n\nStudy material sent to your email.\nOpen it now.`;
 
-📄 *New Assignment Detected!*
-📚 Course: ${assignment.courseName}
-📝 Title: ${assignment.title}
-📅 Due: ${dueDate}
-
-${studyMaterial
-  ? `✅ *Study Material Ready:*\n${studyMaterial}`
-  : `⚠️ No notes found. Here's AI generated material — please verify with your professor.`}
-
-💪 You got this!
-  `.trim();
-
-  return await sendWhatsApp(to, message);
+  return await sendWhatsApp(to, message.trim());
 };
 
 const sendQuizAlert = async (to, quiz, questionBank) => {
-  const dueDate = quiz.dueDate
-    ? new Date(quiz.dueDate).toLocaleDateString('en-IN')
-    : 'No deadline set';
+  const due = formatDate(quiz.dueDate);
 
-  const message = `
-🧞 *EduGenie Alert!*
+  const message = questionBank
+    ? `\u{1F9DE} EDUGENIE\n\nNEW QUIZ DETECTED\n${quiz.title}\nCourse: ${quiz.courseName}\nDue: ${due}\n\n${questionBank}`
+    : `\u{1F9DE} EDUGENIE\n\nNEW QUIZ DETECTED\n${quiz.title}\nCourse: ${quiz.courseName}\nDue: ${due}\n\nQuestion bank sent to your email.\nOpen it now and start preparing.`;
 
-📝 *New Quiz Detected!*
-📚 Course: ${quiz.courseName}
-🎯 Title: ${quiz.title}
-📅 Due: ${dueDate}
+  return await sendWhatsApp(to, message.trim());
+};
 
-${questionBank
-  ? `✅ *Mock Questions Ready:*\n${questionBank}`
-  : `⚠️ No notes found. AI generated questions — please verify!`}
+const sendResourceAlert = async (to, resource) => {
+  const message = `\u{1F9DE} EDUGENIE\n\nNEW STUDY MATERIAL\nSubject: ${resource.courseName}\nFile: ${resource.title}\n\nAccess here:\n${resource.resourceUrl || 'Check Moodle for the file.'}\n\nDetails sent to your email.`;
 
-📖 Start preparing now!
-  `.trim();
-
-  return await sendWhatsApp(to, message);
+  return await sendWhatsApp(to, message.trim());
 };
 
 const sendDeadlineReminder = async (to, assignment) => {
-  const dueDate = new Date(assignment.dueDate).toLocaleDateString('en-IN');
-  const hoursLeft = Math.round((assignment.dueDate - Date.now()) / 3600000);
+  const due = formatDate(assignment.dueDate);
+  const time = formatTime(assignment.dueDate);
 
-  const message = `
-🚨 *EduGenie Reminder!*
+  const message = `\u{1F9DE} EDUGENIE ALERT\n\nDEADLINE TOMORROW\n${assignment.title}\nCourse: ${assignment.courseName}\nDue: ${due} ${time}\n\n24 hours remaining.\nDo not wait. Start now.`;
 
-⏰ Deadline approaching!
-📝 ${assignment.title}
-📚 ${assignment.courseName}
-📅 Due: ${dueDate}
-⏳ ${hoursLeft} hours left!
-
-Don't forget to submit! 💪
-  `.trim();
-
-  return await sendWhatsApp(to, message);
+  return await sendWhatsApp(to, message.trim());
 };
 
 const sendEarlyReminder = async (to, assignment, daysLeft) => {
-  const dueDate = new Date(assignment.dueDate).toLocaleDateString('en-IN');
+  const due = formatDate(assignment.dueDate);
+  const time = formatTime(assignment.dueDate);
 
-  const message = `
-📢 *EduGenie Heads Up!*
+  const message = `\u{1F9DE} EDUGENIE ALERT\n\n${daysLeft} DAYS REMAINING\n${assignment.title}\nCourse: ${assignment.courseName}\nDue: ${due} ${time}\n\nPlan your time. Start working on it now.`;
 
-📝 ${assignment.title}
-📚 ${assignment.courseName}
-📅 Due: ${dueDate}
-⏳ ${daysLeft} day${daysLeft > 1 ? 's' : ''} remaining
-
-🗓️ Plan your time wisely! Start working on it soon.
-  `.trim();
-
-  return await sendWhatsApp(to, message);
+  return await sendWhatsApp(to, message.trim());
 };
 
 const sendUrgentReminder = async (to, assignment, hoursLeft) => {
-  const dueDate = new Date(assignment.dueDate).toLocaleDateString('en-IN');
+  const due = formatDate(assignment.dueDate);
+  const time = formatTime(assignment.dueDate);
 
-  const message = `
-🚨🚨 *URGENT — EduGenie Alert!*
+  let message;
+  if (hoursLeft <= 1) {
+    message = `\u{1F9DE} EDUGENIE ALERT\n\nFINAL WARNING\n${assignment.title}\nCourse: ${assignment.courseName}\nDue: In 60 minutes\n\nLast reminder.\nSubmit immediately.`;
+  } else {
+    message = `\u{1F9DE} EDUGENIE ALERT\n\n2 HOURS REMAINING\n${assignment.title}\nCourse: ${assignment.courseName}\nDue: ${due} ${time}\n\nStop everything.\nSubmit this now.`;
+  }
 
-⏰ Only *${hoursLeft} hours* left!
-📝 ${assignment.title}
-📚 ${assignment.courseName}
-📅 Due: ${dueDate}
-
-⚡ Submit NOW if ready, or finish up ASAP!
-  `.trim();
-
-  return await sendWhatsApp(to, message);
+  return await sendWhatsApp(to, message.trim());
 };
 
 module.exports = {
   sendWhatsApp,
   sendAssignmentAlert,
   sendQuizAlert,
+  sendResourceAlert,
   sendDeadlineReminder,
   sendEarlyReminder,
   sendUrgentReminder

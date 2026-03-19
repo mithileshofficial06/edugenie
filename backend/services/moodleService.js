@@ -73,8 +73,31 @@ const getMoodleQuizzes = async (token, moodleUrl, courseIds) => {
   }
 };
 
+/**
+ * Fetch resources/notes from Moodle using mod_resource_get_resources_by_courses
+ */
+const getMoodleResources = async (token, moodleUrl, courseIds) => {
+  try {
+    const params = {
+      wstoken: token,
+      wsfunction: 'mod_resource_get_resources_by_courses',
+      moodlewsrestformat: 'json'
+    };
+    courseIds.forEach((id, index) => {
+      params[`courseids[${index}]`] = id;
+    });
+    const response = await axios.get(`${moodleUrl}/webservice/rest/server.php`, { params });
+    logger.info(`Fetched resources from Moodle`);
+    return response.data.resources || [];
+  } catch (error) {
+    logger.error(`Error fetching resources: ${error.message}`);
+    return [];
+  }
+};
+
 module.exports = {
   getMoodleCourses,
   getMoodleAssignments,
-  getMoodleQuizzes
+  getMoodleQuizzes,
+  getMoodleResources
 };

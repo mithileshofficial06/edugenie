@@ -12,7 +12,7 @@ CORS(app)
 
 @app.route("/", methods=["GET"])
 def health():
-    return jsonify({"message": "🧞 EduGenie AI Service is running!", "status": "ok"})
+    return jsonify({"message": "EduGenie AI Service is running", "status": "ok"})
 
 
 @app.route("/api/generate-questions", methods=["POST"])
@@ -82,5 +82,5 @@ def api_generate_document():
 
 
 if __name__ == "__main__":
-    print("🧞 EduGenie AI Service starting on port 5000...")
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    print("EduGenie AI Service starting on port 5001...")
+    app.run(host="0.0.0.0", port=5001, debug=True)

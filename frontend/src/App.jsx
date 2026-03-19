@@ -63,7 +63,7 @@ function StatCard({ num, title, desc, color, index }) {
 }
 
 /* ── Token Step ── */
-function TokenStep({ num, title, text, color, index, children }) {
+function StepCard({ num, title, text, color, index, children }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 40 }}
@@ -95,17 +95,27 @@ const slideUp = (delay) => ({
 
 /* ══════════════ APP ══════════════ */
 export default function App() {
-  const [form, setForm] = useState({ moodleUrl: 'https://moodle.licet.ac.in', moodleToken: '', whatsappNumber: '' })
+  const [form, setForm] = useState({
+    moodleUrl: 'https://moodle.licet.ac.in',
+    moodleToken: '',
+    whatsappNumber: '+91',
+    email: '',
+    semesterStart: '',
+    semesterEnd: '',
+  })
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
   const [copied, setCopied] = useState(false)
+  const [joinCopied, setJoinCopied] = useState(false)
 
   const set = (e) => { setForm(p => ({ ...p, [e.target.name]: e.target.value })); if (error) setError(null) }
 
   const submit = async (e) => {
     e.preventDefault(); setLoading(true); setError(null)
     if (!form.whatsappNumber.startsWith('+')) { setError('Number must start with country code (+91)'); setLoading(false); return }
+    if (!form.email || !form.email.includes('@')) { setError('Valid email address is required'); setLoading(false); return }
+    if (!form.semesterStart || !form.semesterEnd) { setError('Both semester dates are required'); setLoading(false); return }
     try {
       const r = await fetch(`${API}/api/register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
       const d = await r.json()
@@ -119,7 +129,12 @@ export default function App() {
     setCopied(true); setTimeout(() => setCopied(false), 2000)
   }
 
-  const reset = () => { setResult(null); setForm({ moodleUrl: 'https://moodle.licet.ac.in', moodleToken: '', whatsappNumber: '' }) }
+  const copyJoin = () => {
+    navigator.clipboard.writeText('join light-type')
+    setJoinCopied(true); setTimeout(() => setJoinCopied(false), 2000)
+  }
+
+  const reset = () => { setResult(null); setForm({ moodleUrl: 'https://moodle.licet.ac.in', moodleToken: '', whatsappNumber: '+91', email: '', semesterStart: '', semesterEnd: '' }) }
 
   return (
     <div style={{ minHeight: '100vh', background: '#0a0a0a', color: '#fff', fontFamily: "'Space Grotesk', sans-serif" }}
@@ -145,6 +160,7 @@ export default function App() {
           </div>
           <div style={{ display: 'flex', gap: 32, fontSize: 13, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
             <a href="#token" style={{ color: '#888', textDecoration: 'none' }}>API Token</a>
+            <a href="#whatsapp" style={{ color: '#888', textDecoration: 'none' }}>WhatsApp</a>
             <a href="#features" style={{ color: '#888', textDecoration: 'none' }}>Features</a>
           </div>
         </div>
@@ -156,19 +172,6 @@ export default function App() {
 
           {/* Left — staggered text */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-
-            {/* Badge — fade from left, delay 0.2 */}
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              style={{
-                display: 'inline-flex', width: 'fit-content',
-                padding: '6px 14px', background: '#ffd700', color: '#000',
-                border: '2px solid #fff', fontSize: 12, fontWeight: 900,
-                textTransform: 'uppercase', boxShadow: '3px 3px 0 #fff', transform: 'rotate(2deg)',
-              }}
-            >VERSION 2.0 LIVE</motion.div>
 
             {/* Heading — each word staggered slide-up */}
             <h1 style={{ fontSize: 'clamp(40px, 5vw, 72px)', fontWeight: 900, textTransform: 'uppercase', lineHeight: 0.95, letterSpacing: '-0.03em' }}>
@@ -225,6 +228,18 @@ export default function App() {
                       <Field label="WhatsApp Number" name="whatsappNumber" type="tel" value={form.whatsappNumber} onChange={set}
                              placeholder="+91 98765 43210" helper="Must join Twilio Sandbox first" required />
                     </motion.div>
+                    <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 1.05 }}>
+                      <Field label="Email Address" name="email" type="email" value={form.email} onChange={set}
+                             placeholder="your.email@college.edu" helper="AI study material will be sent here" required />
+                    </motion.div>
+
+                    {/* Semester Date Pickers */}
+                    <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 1.1 }}
+                                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}
+                                className="date-picker-row">
+                      <Field label="Semester Start" name="semesterStart" type="date" value={form.semesterStart} onChange={set} required />
+                      <Field label="Semester End" name="semesterEnd" type="date" value={form.semesterEnd} onChange={set} required />
+                    </motion.div>
 
                     {error && (
                       <motion.div
@@ -238,7 +253,7 @@ export default function App() {
                     )}
 
                     {/* Button — fade in last + hover pulse */}
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4, delay: 1.1 }}>
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4, delay: 1.2 }}>
                       <motion.button
                         type="submit"
                         disabled={loading}
@@ -295,13 +310,13 @@ export default function App() {
           </motion.div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
-            <TokenStep num="01" title="LOGIN TO MOODLE" color="#00ffff" index={0}
+            <StepCard num="01" title="LOGIN TO MOODLE" color="#00ffff" index={0}
               text="Go to moodle.licet.ac.in and login with your college credentials" />
-            <TokenStep num="02" title="NAVIGATE TO SECURITY KEYS" color="#00ff88" index={1}
+            <StepCard num="02" title="NAVIGATE TO SECURITY KEYS" color="#00ff88" index={1}
               text="Click your Profile picture → Preferences → Security Keys" />
-            <TokenStep num="03" title="COPY YOUR TOKEN" color="#8b5cf6" index={2}
+            <StepCard num="03" title="COPY YOUR TOKEN" color="#8b5cf6" index={2}
               text="Copy the token shown on the page and paste it in the form above" />
-            <TokenStep num="04" title="ALTERNATIVE METHOD" color="#ffd700" index={3}
+            <StepCard num="04" title="ALTERNATIVE METHOD" color="#ffd700" index={3}
               text="Open this URL in your browser after logging in — replace YOUR_USERNAME and YOUR_PASSWORD:">
               <div onClick={copy} style={{
                 background: '#0a0a0a', border: '2px solid #00ffff', padding: 12,
@@ -317,7 +332,7 @@ export default function App() {
               <p style={{ fontSize: 12, color: '#00ffff', fontWeight: 700, textTransform: 'uppercase', borderLeft: '3px solid #00ffff', paddingLeft: 8, marginTop: 4 }}>
                 Copy the token value from the JSON response
               </p>
-            </TokenStep>
+            </StepCard>
           </div>
 
           <motion.div
@@ -338,8 +353,71 @@ export default function App() {
         </div>
       </section>
 
+      {/* ── WhatsApp Sandbox Setup ── */}
+      <section id="whatsapp" style={{ padding: '80px 0' }}>
+        <div className="container">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-60px' }}
+            transition={{ duration: 0.5 }}
+            style={{ marginBottom: 48 }}
+          >
+            <h2 style={{ fontSize: 36, fontWeight: 900, textTransform: 'uppercase', position: 'relative', display: 'inline-block' }}>
+              <span style={{ WebkitTextStroke: '2px #fff', color: 'transparent' }}>ACTIVATE WHATSAPP</span>
+              <span style={{ position: 'absolute', bottom: -8, left: 0, width: '100%', height: 3, background: '#00ff88' }} />
+            </h2>
+            <p style={{ marginTop: 16, fontSize: 14, color: '#888', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              One-time Twilio sandbox setup to receive alerts
+            </p>
+          </motion.div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
+            <StepCard num="01" title="SAVE THIS NUMBER" color="#00ffff" index={0}
+              text='Save +1 415 523 8886 in your phone contacts as "EduGenie"' />
+            <StepCard num="02" title="SEND JOIN CODE" color="#00ff88" index={1}
+              text="Open WhatsApp and send this exact message to +1 415 523 8886:">
+              <div onClick={copyJoin} style={{
+                background: '#0a0a0a', border: '2px solid #00ff88', padding: 12,
+                color: '#00ff88', fontFamily: 'monospace', fontSize: 14, wordBreak: 'break-all',
+                cursor: 'pointer', position: 'relative', lineHeight: 1.5, marginTop: 4,
+                textAlign: 'center', letterSpacing: '0.05em',
+              }}>
+                join light-type
+                <span style={{
+                  position: 'absolute', right: 8, bottom: 8, fontSize: 10, fontWeight: 900,
+                  background: '#00ff88', color: '#000', padding: '2px 6px', fontFamily: "'Space Grotesk', sans-serif",
+                }}>{joinCopied ? 'COPIED!' : 'CLICK TO COPY'}</span>
+              </div>
+            </StepCard>
+            <StepCard num="03" title="WAIT FOR CONFIRMATION" color="#8b5cf6" index={2}
+              text="You will receive a confirmation message from Twilio saying you are connected to the sandbox" />
+            <StepCard num="04" title="YOU ARE READY" color="#ffd700" index={3}
+              text="Enter your WhatsApp number in the form above with country code +91 and click Activate EduGenie" />
+          </div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            style={{
+              marginTop: 32, border: '2px solid #ffd700', background: 'rgba(255,215,0,0.06)',
+              padding: '16px 24px', textAlign: 'center', boxShadow: '3px 3px 0 #ffd700',
+            }}
+          >
+            <p style={{ fontSize: 13, fontWeight: 900, color: '#ffd700', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
+              THIS IS A ONE TIME SETUP.
+            </p>
+            <p style={{ fontSize: 13, fontWeight: 700, color: '#fff', textTransform: 'uppercase' }}>
+              SANDBOX CONNECTION LASTS 72 HOURS. SEND THE JOIN CODE AGAIN IF ALERTS STOP.
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
       {/* ── Features (scroll-triggered stagger) ── */}
-      <section id="features" style={{ padding: '80px 0' }}>
+      <section id="features" style={{ background: '#111', borderTop: '2px solid #333', borderBottom: '2px solid #333', padding: '80px 0' }}>
         <div className="container">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -372,12 +450,12 @@ export default function App() {
       >
         <div className="container">
           <p style={{ fontSize: 12, fontWeight: 900, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-            EDUGENIE // SYSTEM V2.0 // NO MERCY ACADEMICS
+            EDUGENIE // NO MERCY ACADEMICS
           </p>
         </div>
       </motion.footer>
 
-      {/* ── Mobile + cursor blink ── */}
+      {/* ── Mobile + cursor blink + date input styling ── */}
       <style>{`
         @keyframes blink {
           0%, 100% { opacity: 1; }
@@ -388,6 +466,14 @@ export default function App() {
           color: #00ffff;
           font-weight: 900;
           margin-left: 2px;
+        }
+        /* Date input brutalist styling */
+        input[type="date"].brutal-input {
+          color-scheme: dark;
+        }
+        input[type="date"].brutal-input::-webkit-calendar-picker-indicator {
+          filter: invert(1);
+          cursor: pointer;
         }
         @media (max-width: 900px) {
           .container { padding: 0 16px !important; }
@@ -400,6 +486,9 @@ export default function App() {
           }
           section > .container > div[style*="grid-template-columns: repeat(4"],
           section > .container > div[style*="grid-template-columns: repeat(2"] {
+            grid-template-columns: 1fr !important;
+          }
+          .date-picker-row {
             grid-template-columns: 1fr !important;
           }
         }
