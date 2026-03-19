@@ -1,6 +1,7 @@
 require('dotenv').config();
 const nodemailer = require('nodemailer');
 const logger = require('../utils/logger');
+const { withRetry } = require('../utils/retry');
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -46,19 +47,22 @@ const formatTime = (d) => {
   return dt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
 };
 
-/** Send helper */
+/** Send helper with retry */
 const send = async (to, subject, html) => {
   try {
-    await transporter.sendMail({
-      from: `"EduGenie" <${process.env.EMAIL_USER}>`,
-      to,
-      subject,
-      html
-    });
+    await withRetry(
+      () => transporter.sendMail({
+        from: `"EduGenie" <${process.env.EMAIL_USER}>`,
+        to,
+        subject,
+        html
+      }),
+      { retries: 3, baseDelay: 2000, label: `Email to ${to}` }
+    );
     logger.success(`Email sent to ${to}: ${subject}`);
     return true;
   } catch (error) {
-    logger.error(`Email error to ${to}: ${error.message}`);
+    logger.error(`Email error to ${to} after retries: ${error.message}`);
     return false;
   }
 };

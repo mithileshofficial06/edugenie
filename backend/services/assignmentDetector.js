@@ -28,7 +28,7 @@ const isDueDatePassed = (dueDate) => {
   return dueDate < new Date();
 };
 
-const detectNewAssignments = async (studentId, moodleCourses, moodleAssignments, moodleQuizzes, student) => {
+const detectNewAssignments = async (studentId, moodleCourses, moodleAssignments, moodleQuizzes, student, courseNameMap = {}) => {
   const newItems = [];
 
   const registeredAt = student.registeredAt || student.createdAt || new Date(0);
@@ -95,7 +95,7 @@ const detectNewAssignments = async (studentId, moodleCourses, moodleAssignments,
         description: quiz.intro || '',
         dueDate,
         courseId: quiz.course,
-        courseName: quiz.coursename || 'Unknown Course',
+        courseName: courseNameMap[quiz.course] || quiz.coursename || 'Unknown Course',
         type: 'quiz',
         isNotified: skipAlert,
         studyMaterialGenerated: skipAlert,

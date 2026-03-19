@@ -1,6 +1,7 @@
 require('dotenv').config();
 const twilio = require('twilio');
 const logger = require('../utils/logger');
+const { withRetry } = require('../utils/retry');
 
 const client = twilio(
   process.env.TWILIO_ACCOUNT_SID,
@@ -13,15 +14,18 @@ const sendWhatsApp = async (to, message) => {
       ? message.substring(0, 1497) + '...'
       : message;
 
-    const result = await client.messages.create({
-      from: process.env.TWILIO_WHATSAPP_FROM,
-      to: `whatsapp:${to}`,
-      body: truncatedMsg
-    });
+    const result = await withRetry(
+      () => client.messages.create({
+        from: process.env.TWILIO_WHATSAPP_FROM,
+        to: `whatsapp:${to}`,
+        body: truncatedMsg
+      }),
+      { retries: 3, baseDelay: 2000, label: `WhatsApp to ${to}` }
+    );
     logger.success(`WhatsApp sent to ${to} (SID: ${result.sid})`);
     return true;
   } catch (error) {
-    logger.error(`WhatsApp error to ${to}: ${error.message}`);
+    logger.error(`WhatsApp error to ${to} after retries: ${error.message}`);
     if (error.code) {
       logger.error(`Twilio error code: ${error.code} — ${error.moreInfo || ''}`);
     }

@@ -57,7 +57,7 @@ const runPipeline = async () => {
         // Step 3 — Detect new items (registration-date and deadline aware)
         logger.info('Step 3: Detecting new items (filtering old/past-deadline)...');
         const courses = assignments;
-        const newItems = await detectNewAssignments(student._id, courses, assignments, quizzes, student);
+        const newItems = await detectNewAssignments(student._id, courses, assignments, quizzes, student, courseNameMap);
         logger.info(`Step 3 result: ${newItems.length} genuinely-new item(s) to alert`);
 
         // Step 4 — Generate AI content, send WhatsApp alert + Email with full content

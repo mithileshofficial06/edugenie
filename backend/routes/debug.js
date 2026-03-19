@@ -7,6 +7,20 @@ const { runPipeline } = require('../services/scheduler');
 const { sendWhatsApp } = require('../services/whatsappService');
 const logger = require('../utils/logger');
 
+const isProduction = process.env.NODE_ENV === 'production';
+
+router.use((req, res, next) => {
+  if (isProduction) {
+    const key = req.headers['x-debug-key'];
+    if (!key || key !== process.env.DEBUG_SECRET) {
+      return res.status(404).json({ 
+        message: 'Not found' 
+      });
+    }
+  }
+  next();
+});
+
 // GET /api/debug/run-pipeline — manually trigger the full pipeline
 router.get('/run-pipeline', async (req, res) => {
   try {
