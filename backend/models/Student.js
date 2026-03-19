@@ -17,6 +17,10 @@ const studentSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  registeredAt: {
+    type: Date,
+    default: Date.now
+  },
   createdAt: {
     type: Date,
     default: Date.now

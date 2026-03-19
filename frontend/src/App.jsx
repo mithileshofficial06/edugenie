@@ -41,14 +41,14 @@ function Field({ label, helper, ...props }) {
 }
 
 /* ── Stat Card ── */
-function StatCard({ num, title, desc, color, delay }) {
+function StatCard({ num, title, desc, color, index }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 24 }}
+      initial={{ opacity: 0, y: 40 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.35, delay }}
-      whileHover={{ y: -3, x: -3, boxShadow: `6px 6px 0 ${color}` }}
+      viewport={{ once: true, margin: '-60px' }}
+      transition={{ duration: 0.45, delay: index * 0.15 }}
+      whileHover={{ y: -3, x: -3, scale: 1.02, boxShadow: `6px 6px 0 ${color}`, transition: { duration: 0.2 } }}
       style={{
         background: '#111', border: `2px solid ${color}`,
         boxShadow: `3px 3px 0 ${color}`, padding: 20,
@@ -63,21 +63,35 @@ function StatCard({ num, title, desc, color, delay }) {
 }
 
 /* ── Token Step ── */
-function TokenStep({ num, title, text, color, children }) {
+function TokenStep({ num, title, text, color, index, children }) {
   return (
-    <div style={{
-      background: '#111', border: '2px solid #333', padding: 24,
-      boxShadow: '3px 3px 0 #333', display: 'flex', flexDirection: 'column', gap: 12,
-    }}>
+    <motion.div
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-60px' }}
+      transition={{ duration: 0.45, delay: index * 0.15 }}
+      whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+      style={{
+        background: '#111', border: '2px solid #333', padding: 24,
+        boxShadow: '3px 3px 0 #333', display: 'flex', flexDirection: 'column', gap: 12,
+      }}
+    >
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, borderBottom: '2px solid #333', paddingBottom: 12 }}>
         <span style={{ fontSize: 32, fontWeight: 900, WebkitTextStroke: `2px ${color}`, color: 'transparent' }}>{num}</span>
         <span style={{ fontSize: 15, fontWeight: 900, textTransform: 'uppercase' }}>{title}</span>
       </div>
       <p style={{ fontSize: 14, color: '#888', lineHeight: 1.6 }}>{text}</p>
       {children}
-    </div>
+    </motion.div>
   )
 }
+
+/* ── Slide-up helper ── */
+const slideUp = (delay) => ({
+  initial: { opacity: 0, y: 30 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.6, delay, ease: [0.25, 0.1, 0.25, 1] },
+})
 
 /* ══════════════ APP ══════════════ */
 export default function App() {
@@ -113,8 +127,13 @@ export default function App() {
 
       <Ticker />
 
-      {/* ── Nav ── */}
-      <nav style={{ height: 64, borderBottom: '2px solid #333', background: '#0a0a0a', position: 'sticky', top: 0, zIndex: 50 }}>
+      {/* ── Nav (fade down) ── */}
+      <motion.nav
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+        style={{ height: 64, borderBottom: '2px solid #333', background: '#0a0a0a', position: 'sticky', top: 0, zIndex: 50 }}
+      >
         <div className="container" style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{
@@ -129,40 +148,58 @@ export default function App() {
             <a href="#features" style={{ color: '#888', textDecoration: 'none' }}>Features</a>
           </div>
         </div>
-      </nav>
+      </motion.nav>
 
       {/* ── Hero ── */}
       <section style={{ padding: '80px 0' }}>
         <div className="container" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48, alignItems: 'center' }}>
 
-          {/* Left */}
-          <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }}
-                      style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-            <div style={{
-              display: 'inline-flex', width: 'fit-content',
-              padding: '6px 14px', background: '#ffd700', color: '#000',
-              border: '2px solid #fff', fontSize: 12, fontWeight: 900,
-              textTransform: 'uppercase', boxShadow: '3px 3px 0 #fff', transform: 'rotate(2deg)',
-            }}>VERSION 2.0 LIVE</div>
+          {/* Left — staggered text */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
 
+            {/* Badge — fade from left, delay 0.2 */}
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              style={{
+                display: 'inline-flex', width: 'fit-content',
+                padding: '6px 14px', background: '#ffd700', color: '#000',
+                border: '2px solid #fff', fontSize: 12, fontWeight: 900,
+                textTransform: 'uppercase', boxShadow: '3px 3px 0 #fff', transform: 'rotate(2deg)',
+              }}
+            >VERSION 2.0 LIVE</motion.div>
+
+            {/* Heading — each word staggered slide-up */}
             <h1 style={{ fontSize: 'clamp(40px, 5vw, 72px)', fontWeight: 900, textTransform: 'uppercase', lineHeight: 0.95, letterSpacing: '-0.03em' }}>
-              DOMINATE<br />
-              <span style={{ WebkitTextStroke: '2px #00ffff', color: 'transparent' }}>EVERY</span><br />
-              DEADLINE
+              <motion.span {...slideUp(0.3)} style={{ display: 'block' }}>DOMINATE</motion.span>
+              <motion.span {...slideUp(0.5)} style={{ display: 'block', WebkitTextStroke: '2px #00ffff', color: 'transparent' }}>EVERY</motion.span>
+              <motion.span {...slideUp(0.7)} style={{ display: 'block' }}>DEADLINE</motion.span>
             </h1>
 
-            <p style={{
-              fontSize: 16, color: '#888', fontWeight: 600, maxWidth: 420,
-              borderLeft: '3px solid #8b5cf6', paddingLeft: 16, lineHeight: 1.6,
-              textTransform: 'uppercase', letterSpacing: '0.02em',
-            }}>
-              Connect Moodle. Get WhatsApp alerts. Crush exams with auto-generated AI material. Brutally simple.
-            </p>
-          </motion.div>
+            {/* Subtitle — fade in, delay 0.9 + blinking cursor */}
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.9 }}
+              style={{
+                fontSize: 16, color: '#888', fontWeight: 600, maxWidth: 420,
+                borderLeft: '3px solid #8b5cf6', paddingLeft: 16, lineHeight: 1.6,
+                textTransform: 'uppercase', letterSpacing: '0.02em',
+              }}
+            >
+              Connect Moodle. Get WhatsApp alerts. Crush exams with auto-generated AI material. Brutally simple
+              <span className="blink-cursor">|</span>
+            </motion.p>
+          </div>
 
-          {/* Right — Form */}
-          <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4, delay: 0.15 }}
-                      style={{ maxWidth: 500, width: '100%', justifySelf: 'end' }}>
+          {/* Right — Form (slide from right) */}
+          <motion.div
+            initial={{ opacity: 0, x: 60 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.7, delay: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+            style={{ maxWidth: 500, width: '100%', justifySelf: 'end' }}
+          >
             <div style={{
               background: '#111', border: '2px solid #00ffff', padding: 32,
               boxShadow: '4px 4px 0 #00ffff',
@@ -175,26 +212,48 @@ export default function App() {
                 {!result ? (
                   <motion.form key="f" onSubmit={submit} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                                style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                    <Field label="Moodle URL" name="moodleUrl" type="url" value={form.moodleUrl} onChange={set}
-                           placeholder="https://moodle.yourschool.edu" required />
-                    <Field label="Moodle API Token" name="moodleToken" type="password" value={form.moodleToken} onChange={set}
-                           placeholder="Paste your token" helper="Preferences → Security Keys" required />
-                    <Field label="WhatsApp Number" name="whatsappNumber" type="tel" value={form.whatsappNumber} onChange={set}
-                           placeholder="+91 98765 43210" helper="Must join Twilio Sandbox first" required />
+                    {/* Staggered fields */}
+                    <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.8 }}>
+                      <Field label="Moodle URL" name="moodleUrl" type="url" value={form.moodleUrl} onChange={set}
+                             placeholder="https://moodle.yourschool.edu" required />
+                    </motion.div>
+                    <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.9 }}>
+                      <Field label="Moodle API Token" name="moodleToken" type="password" value={form.moodleToken} onChange={set}
+                             placeholder="Paste your token" helper="Preferences → Security Keys" required />
+                    </motion.div>
+                    <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 1.0 }}>
+                      <Field label="WhatsApp Number" name="whatsappNumber" type="tel" value={form.whatsappNumber} onChange={set}
+                             placeholder="+91 98765 43210" helper="Must join Twilio Sandbox first" required />
+                    </motion.div>
 
                     {error && (
-                      <div style={{
-                        padding: 12, background: '#ff3333', color: '#000', border: '2px solid #000',
-                        fontSize: 13, fontWeight: 900, textTransform: 'uppercase',
-                      }}>{error}</div>
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        style={{
+                          padding: 12, background: '#ff3333', color: '#000', border: '2px solid #000',
+                          fontSize: 13, fontWeight: 900, textTransform: 'uppercase',
+                        }}
+                      >{error}</motion.div>
                     )}
 
-                    <button type="submit" disabled={loading} className="brutal-btn" style={{ marginTop: 8 }}>
-                      {loading ? 'PROCESSING...' : 'ACTIVATE EDUGENIE'}
-                    </button>
+                    {/* Button — fade in last + hover pulse */}
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4, delay: 1.1 }}>
+                      <motion.button
+                        type="submit"
+                        disabled={loading}
+                        className="brutal-btn"
+                        style={{ marginTop: 8 }}
+                        whileHover={!loading ? { scale: 1.03 } : {}}
+                        whileTap={!loading ? { scale: 0.97 } : {}}
+                      >
+                        {loading ? 'PROCESSING...' : 'ACTIVATE EDUGENIE'}
+                      </motion.button>
+                    </motion.div>
                   </motion.form>
                 ) : (
-                  <motion.div key="s" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+                  <motion.div key="s" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+                              transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
                               style={{ background: '#00ff88', color: '#000', border: '2px solid #000', padding: 24, textAlign: 'center', boxShadow: '3px 3px 0 #00ff88' }}>
                     <div style={{ fontSize: 48, fontWeight: 900, marginBottom: 12 }}>✓</div>
                     <h3 style={{ fontSize: 20, fontWeight: 900, textTransform: 'uppercase', marginBottom: 8 }}>System Armed</h3>
@@ -216,10 +275,16 @@ export default function App() {
         </div>
       </section>
 
-      {/* ── Token Guide ── */}
+      {/* ── Token Guide (scroll-triggered stagger) ── */}
       <section id="token" style={{ background: '#111', borderTop: '2px solid #333', borderBottom: '2px solid #333', padding: '80px 0' }}>
         <div className="container">
-          <div style={{ marginBottom: 48 }}>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-60px' }}
+            transition={{ duration: 0.5 }}
+            style={{ marginBottom: 48 }}
+          >
             <h2 style={{ fontSize: 36, fontWeight: 900, textTransform: 'uppercase', position: 'relative', display: 'inline-block' }}>
               <span style={{ WebkitTextStroke: '2px #fff', color: 'transparent' }}>GET YOUR API TOKEN</span>
               <span style={{ position: 'absolute', bottom: -8, left: 0, width: '100%', height: 3, background: '#ff3333' }} />
@@ -227,16 +292,16 @@ export default function App() {
             <p style={{ marginTop: 16, fontSize: 14, color: '#888', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               Follow these steps to connect your Moodle account
             </p>
-          </div>
+          </motion.div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
-            <TokenStep num="01" title="LOGIN TO MOODLE" color="#00ffff"
+            <TokenStep num="01" title="LOGIN TO MOODLE" color="#00ffff" index={0}
               text="Go to moodle.licet.ac.in and login with your college credentials" />
-            <TokenStep num="02" title="NAVIGATE TO SECURITY KEYS" color="#00ff88"
+            <TokenStep num="02" title="NAVIGATE TO SECURITY KEYS" color="#00ff88" index={1}
               text="Click your Profile picture → Preferences → Security Keys" />
-            <TokenStep num="03" title="COPY YOUR TOKEN" color="#8b5cf6"
+            <TokenStep num="03" title="COPY YOUR TOKEN" color="#8b5cf6" index={2}
               text="Copy the token shown on the page and paste it in the form above" />
-            <TokenStep num="04" title="ALTERNATIVE METHOD" color="#ffd700"
+            <TokenStep num="04" title="ALTERNATIVE METHOD" color="#ffd700" index={3}
               text="Open this URL in your browser after logging in — replace YOUR_USERNAME and YOUR_PASSWORD:">
               <div onClick={copy} style={{
                 background: '#0a0a0a', border: '2px solid #00ffff', padding: 12,
@@ -255,47 +320,75 @@ export default function App() {
             </TokenStep>
           </div>
 
-          <div style={{
-            marginTop: 32, border: '2px solid #00ff88', background: 'rgba(0,255,136,0.06)',
-            padding: '16px 24px', textAlign: 'center', boxShadow: '3px 3px 0 #00ff88',
-          }}>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            style={{
+              marginTop: 32, border: '2px solid #00ff88', background: 'rgba(0,255,136,0.06)',
+              padding: '16px 24px', textAlign: 'center', boxShadow: '3px 3px 0 #00ff88',
+            }}
+          >
             <p style={{ fontSize: 13, fontWeight: 900, color: '#00ff88', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>SECURITY PROTOCOL ACTIVE</p>
             <p style={{ fontSize: 13, fontWeight: 700, color: '#fff', textTransform: 'uppercase' }}>
               Your token is encrypted and never shared. Used only to monitor your Moodle courses.
             </p>
-          </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* ── Features ── */}
+      {/* ── Features (scroll-triggered stagger) ── */}
       <section id="features" style={{ padding: '80px 0' }}>
         <div className="container">
-          <div style={{ marginBottom: 48 }}>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-60px' }}
+            transition={{ duration: 0.5 }}
+            style={{ marginBottom: 48 }}
+          >
             <h2 style={{ fontSize: 36, fontWeight: 900, textTransform: 'uppercase', position: 'relative', display: 'inline-block' }}>
               <span style={{ WebkitTextStroke: '2px #fff', color: 'transparent' }}>THE ARSENAL</span>
               <span style={{ position: 'absolute', bottom: -8, left: 0, width: '100%', height: 3, background: '#8b5cf6' }} />
             </h2>
-          </div>
+          </motion.div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-            <StatCard num="01" title="AUTO-SYNC" desc="Continuous loop monitoring of Moodle assignments. Never miss a drop." color="#00ffff" delay={0} />
-            <StatCard num="02" title="WHATSAPP ALERTS" desc="Raw payload delivery directly to your phone. Zero friction." color="#00ff88" delay={0.1} />
-            <StatCard num="03" title="GEMINI AI FORGE" desc="Instant synthesis of mock exams and detailed study guides." color="#8b5cf6" delay={0.2} />
-            <StatCard num="04" title="DEADLINE TERROR" desc="Multi-tier aggressive reminders: 3 Days, 24 Hours, 2 Hours." color="#ffd700" delay={0.3} />
+            <StatCard num="01" title="AUTO-SYNC" desc="Continuous loop monitoring of Moodle assignments. Never miss a drop." color="#00ffff" index={0} />
+            <StatCard num="02" title="WHATSAPP ALERTS" desc="Raw payload delivery directly to your phone. Zero friction." color="#00ff88" index={1} />
+            <StatCard num="03" title="GEMINI AI FORGE" desc="Instant synthesis of mock exams and detailed study guides." color="#8b5cf6" index={2} />
+            <StatCard num="04" title="DEADLINE TERROR" desc="Multi-tier aggressive reminders: 3 Days, 24 Hours, 2 Hours." color="#ffd700" index={3} />
           </div>
         </div>
       </section>
 
       {/* ── Footer ── */}
-      <footer style={{ padding: '24px 0', borderTop: '2px solid #333', textAlign: 'center' }}>
+      <motion.footer
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5 }}
+        style={{ padding: '24px 0', borderTop: '2px solid #333', textAlign: 'center' }}
+      >
         <div className="container">
           <p style={{ fontSize: 12, fontWeight: 900, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
             EDUGENIE // SYSTEM V2.0 // NO MERCY ACADEMICS
           </p>
         </div>
-      </footer>
+      </motion.footer>
 
-      {/* ── Mobile responsive overrides ── */}
+      {/* ── Mobile + cursor blink ── */}
       <style>{`
+        @keyframes blink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0; }
+        }
+        .blink-cursor {
+          animation: blink 1s step-end infinite;
+          color: #00ffff;
+          font-weight: 900;
+          margin-left: 2px;
+        }
         @media (max-width: 900px) {
           .container { padding: 0 16px !important; }
           section > .container > div[style*="grid-template-columns: repeat(4"] { grid-template-columns: repeat(2, 1fr) !important; }

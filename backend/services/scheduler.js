@@ -43,17 +43,25 @@ const runPipeline = async () => {
         const totalAssignments = assignments.reduce((sum, c) => sum + (c.assignments?.length || 0), 0);
         logger.info(`Step 2 result: ${totalAssignments} assignment(s), ${quizzes.length} quiz(zes)`);
 
-        // Step 3 — Detect new items
-        logger.info('Step 3: Detecting new items...');
-        const newItems = await detectNewAssignments(student._id, courses, assignments, quizzes);
-        logger.info(`Step 3 result: ${newItems.length} NEW item(s) detected`);
+        // Step 3 — Detect new items (now registration-date and deadline aware)
+        logger.info('Step 3: Detecting new items (filtering old/past-deadline)...');
+        const newItems = await detectNewAssignments(student._id, courses, assignments, quizzes, student);
+        logger.info(`Step 3 result: ${newItems.length} genuinely-new item(s) to alert`);
 
-        // Step 4 — Generate AI content and send WhatsApp
+        // Step 4 — Generate AI content and send WhatsApp (only for genuinely new items)
         if (newItems.length > 0) {
           logger.info('Step 4: Generating AI content & sending WhatsApp alerts...');
         }
         for (const item of newItems) {
           try {
+            // Double-check: skip if due date has somehow passed between detection and now
+            if (item.dueDate && item.dueDate < new Date()) {
+              logger.info(`  ⊘ Skipping past-deadline item: "${item.title}"`);
+              item.isNotified = true;
+              await item.save();
+              continue;
+            }
+
             if (item.type === 'quiz') {
               logger.info(`  → Generating question bank for quiz: "${item.title}"`);
               const questionBank = await generateQuestionBank(item.title, item.courseName);
@@ -97,42 +105,45 @@ const runPipeline = async () => {
 };
 
 /**
- * Multi-tier deadline reminder system:
- *   - 3 days before deadline
- *   - 1 day before deadline
- *   - 2 hours before deadline
+ * Multi-tier deadline reminder system with precise time-window checks:
+ *   - 3 days before deadline  (70–74 hr window)
+ *   - 1 day before deadline   (22–26 hr window)
+ *   - 2 hours before deadline (1.5–2.5 hr window)
  */
 const checkDeadlineReminders = async (student) => {
-  const now = Date.now();
+  const now = new Date();
 
-  // Find all assignments with a due date in the future that have been notified
+  // Only get assignments with a FUTURE due date that have been notified already
   const upcomingItems = await Assignment.find({
     studentId: student._id,
-    dueDate: { $gte: new Date() },
+    dueDate: { $gt: now },     // strictly future — past deadlines are completely ignored
     isNotified: true
   });
 
   for (const item of upcomingItems) {
-    const hoursUntilDue = (item.dueDate.getTime() - now) / 3600000;
+    // Skip items with no due date (shouldn't exist here due to query, but safety check)
+    if (!item.dueDate) continue;
+
+    const hoursUntilDue = (item.dueDate.getTime() - now.getTime()) / 3600000;
     const reminders = item.reminders || {};
 
     try {
-      // 2-hour reminder (most urgent)
-      if (hoursUntilDue <= 2 && hoursUntilDue > 0 && !reminders.twoHours) {
+      // 2-hour urgent reminder (1.5 – 2.5 hr window)
+      if (hoursUntilDue <= 2.5 && hoursUntilDue >= 1.5 && !reminders.twoHours) {
         await sendUrgentReminder(student.whatsappNumber, item, Math.round(hoursUntilDue));
         item.reminders = { ...reminders, twoHours: true };
         await item.save();
         logger.info(`  ⏰ 2-hour urgent reminder sent for: "${item.title}"`);
       }
-      // 1-day reminder
-      else if (hoursUntilDue <= 24 && hoursUntilDue > 2 && !reminders.oneDay) {
+      // 1-day reminder (22 – 26 hr window)
+      else if (hoursUntilDue <= 26 && hoursUntilDue >= 22 && !reminders.oneDay) {
         await sendDeadlineReminder(student.whatsappNumber, item);
         item.reminders = { ...reminders, oneDay: true };
         await item.save();
         logger.info(`  📅 1-day reminder sent for: "${item.title}"`);
       }
-      // 3-day reminder
-      else if (hoursUntilDue <= 72 && hoursUntilDue > 24 && !reminders.threeDays) {
+      // 3-day reminder (70 – 74 hr window)
+      else if (hoursUntilDue <= 74 && hoursUntilDue >= 70 && !reminders.threeDays) {
         const daysLeft = Math.ceil(hoursUntilDue / 24);
         await sendEarlyReminder(student.whatsappNumber, item, daysLeft);
         item.reminders = { ...reminders, threeDays: true };
