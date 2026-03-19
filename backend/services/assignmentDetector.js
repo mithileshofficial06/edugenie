@@ -1,5 +1,5 @@
 const Assignment = require('../models/Assignment');
-const { classifyContent } = require('./contentClassifier');
+const { classifyContent, detectQuizType } = require('./contentClassifier');
 const logger = require('../utils/logger');
 
 /**
@@ -88,6 +88,9 @@ const detectNewAssignments = async (studentId, moodleCourses, moodleAssignments,
       const isPastDeadline = isDueDatePassed(dueDate);
       const skipAlert = isOld || isPastDeadline;
 
+      const quizType = detectQuizType(quiz.name, quiz.intro || '', quiz);
+      logger.info(`  Quiz type detected: ${quizType} for "${quiz.name}"`);
+
       const newQuiz = new Assignment({
         studentId,
         moodleAssignmentId: `quiz_${quiz.id}`,
@@ -97,6 +100,7 @@ const detectNewAssignments = async (studentId, moodleCourses, moodleAssignments,
         courseId: quiz.course,
         courseName: courseNameMap[quiz.course] || quiz.coursename || 'Unknown Course',
         type: 'quiz',
+        quizType,
         isNotified: skipAlert,
         studyMaterialGenerated: skipAlert,
       });

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import ParticleBackground from './components/ParticleBackground'
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
@@ -139,6 +140,10 @@ export default function App() {
   return (
     <div style={{ minHeight: '100vh', background: '#0a0a0a', color: '#fff', fontFamily: "'Space Grotesk', sans-serif" }}
          className="selection:bg-[#00ffff] selection:text-black">
+
+      <ParticleBackground />
+
+      <div style={{ position: 'relative', zIndex: 1 }}>
 
       <Ticker />
 
@@ -493,6 +498,7 @@ export default function App() {
           }
         }
       `}</style>
+      </div>
     </div>
   )
 }

@@ -1,6 +1,36 @@
 const axios = require('axios');
 const logger = require('../utils/logger');
 
+/**
+ * Validate Moodle token before running the pipeline
+ */
+const validateMoodleToken = async (token, moodleUrl) => {
+  try {
+    const response = await axios.get(`${moodleUrl}/webservice/rest/server.php`, {
+      params: {
+        wstoken: token,
+        wsfunction: 'core_webservice_get_site_info',
+        moodlewsrestformat: 'json'
+      },
+      timeout: 10000
+    });
+
+    if (response.data.errorcode) {
+      logger.error(`Invalid Moodle token: ${response.data.errorcode}`);
+      return { valid: false, error: response.data.errorcode };
+    }
+
+    return {
+      valid: true,
+      userId: response.data.userid,
+      siteName: response.data.sitename
+    };
+  } catch (error) {
+    logger.error(`Moodle unreachable: ${error.message}`);
+    return { valid: false, error: 'Moodle server unreachable' };
+  }
+};
+
 const getMoodleCourses = async (token, moodleUrl) => {
   try {
     const response = await axios.get(`${moodleUrl}/webservice/rest/server.php`, {
@@ -9,7 +39,8 @@ const getMoodleCourses = async (token, moodleUrl) => {
         wsfunction: 'core_enrol_get_users_courses',
         moodlewsrestformat: 'json',
         userid: await getMoodleUserId(token, moodleUrl)
-      }
+      },
+      timeout: 10000
     });
     logger.info(`Fetched ${response.data.length} courses`);
     return response.data;
@@ -26,7 +57,8 @@ const getMoodleUserId = async (token, moodleUrl) => {
         wstoken: token,
         wsfunction: 'core_webservice_get_site_info',
         moodlewsrestformat: 'json'
-      }
+      },
+      timeout: 10000
     });
     return response.data.userid;
   } catch (error) {
@@ -45,7 +77,7 @@ const getMoodleAssignments = async (token, moodleUrl, courseIds) => {
     courseIds.forEach((id, index) => {
       params[`courseids[${index}]`] = id;
     });
-    const response = await axios.get(`${moodleUrl}/webservice/rest/server.php`, { params });
+    const response = await axios.get(`${moodleUrl}/webservice/rest/server.php`, { params, timeout: 10000 });
     logger.info(`Fetched assignments from Moodle`);
     return response.data.courses || [];
   } catch (error) {
@@ -64,7 +96,7 @@ const getMoodleQuizzes = async (token, moodleUrl, courseIds) => {
     courseIds.forEach((id, index) => {
       params[`courseids[${index}]`] = id;
     });
-    const response = await axios.get(`${moodleUrl}/webservice/rest/server.php`, { params });
+    const response = await axios.get(`${moodleUrl}/webservice/rest/server.php`, { params, timeout: 10000 });
     logger.info(`Fetched quizzes from Moodle`);
     return response.data.quizzes || [];
   } catch (error) {
@@ -86,7 +118,7 @@ const getMoodleResources = async (token, moodleUrl, courseIds) => {
     courseIds.forEach((id, index) => {
       params[`courseids[${index}]`] = id;
     });
-    const response = await axios.get(`${moodleUrl}/webservice/rest/server.php`, { params });
+    const response = await axios.get(`${moodleUrl}/webservice/rest/server.php`, { params, timeout: 10000 });
     logger.info(`Fetched resources from Moodle`);
     return response.data.resources || [];
   } catch (error) {
@@ -99,5 +131,6 @@ module.exports = {
   getMoodleCourses,
   getMoodleAssignments,
   getMoodleQuizzes,
-  getMoodleResources
+  getMoodleResources,
+  validateMoodleToken
 };

@@ -33,6 +33,10 @@ const studentSchema = new mongoose.Schema({
     type: [String],
     default: []
   },
+  lastSandboxReminderSent: {
+    type: Date,
+    default: null
+  },
   registeredAt: {
     type: Date,
     default: Date.now

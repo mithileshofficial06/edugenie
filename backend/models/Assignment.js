@@ -20,6 +20,11 @@ const assignmentSchema = new mongoose.Schema({
     enum: ['assignment', 'quiz', 'notes', 'resource'],
     default: 'assignment'
   },
+  quizType: {
+    type: String,
+    enum: ['mcq', 'descriptive', 'unknown'],
+    default: 'unknown'
+  },
   resourceUrl: String,
   isNotified: {
     type: Boolean,

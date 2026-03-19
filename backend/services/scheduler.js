@@ -1,13 +1,86 @@
 const cron = require('node-cron');
 const Student = require('../models/Student');
 const Assignment = require('../models/Assignment');
-const { getMoodleCourses, getMoodleAssignments, getMoodleQuizzes, getMoodleResources } = require('./moodleService');
+const { getMoodleCourses, getMoodleAssignments, getMoodleQuizzes, getMoodleResources, validateMoodleToken } = require('./moodleService');
 const { detectNewAssignments } = require('./assignmentDetector');
-const { sendAssignmentAlert, sendQuizAlert, sendResourceAlert, sendDeadlineReminder, sendEarlyReminder, sendUrgentReminder } = require('./whatsappService');
+const { sendAssignmentAlert, sendQuizAlert, sendResourceAlert, sendDeadlineReminder, sendEarlyReminder, sendUrgentReminder, sendWhatsApp } = require('./whatsappService');
 const { sendQuizEmail, sendAssignmentEmail, sendNotesEmail } = require('./emailService');
 const { generateQuestionBank, generateStudyDocument } = require('./aiService');
 const { extractPageCount } = require('./contentClassifier');
+const { extractTextFromResource } = require('./pdfService');
 const logger = require('../utils/logger');
+
+/**
+ * Try to extract actual notes/PDF content for an item from Moodle resources
+ */
+const getNotesForItem = async (student, item, courseId) => {
+  try {
+    const resources = await getMoodleResources(student.moodleToken, student.moodleUrl, [courseId]);
+
+    if (!resources || resources.length === 0) {
+      return null;
+    }
+
+    // Find resources that match the topic keywords
+    const titleWords = item.title.toLowerCase().split(' ').filter(w => w.length > 3);
+
+    const relevantResource = resources.find(r => {
+      const resourceName = r.name.toLowerCase();
+      return titleWords.some(word => resourceName.includes(word));
+    });
+
+    if (!relevantResource) {
+      logger.info(`  No matching notes found for: "${item.title}"`);
+      return null;
+    }
+
+    // Try to extract text from the file
+    if (relevantResource.contentfiles && relevantResource.contentfiles.length > 0) {
+      const file = relevantResource.contentfiles[0];
+      const fileUrl = file.fileurl;
+
+      const extractedText = await extractTextFromResource(fileUrl, student.moodleToken);
+
+      if (extractedText) {
+        logger.success(`  Notes found for "${item.title}": ${extractedText.length} chars`);
+        return extractedText;
+      }
+    }
+
+    return null;
+  } catch (error) {
+    logger.error(`  Notes extraction error: ${error.message}`);
+    return null;
+  }
+};
+
+/**
+ * Check if Twilio sandbox renewal reminder is needed (72hr expiry)
+ */
+const checkSandboxExpiry = async (student) => {
+  const now = new Date();
+  const registeredAt = new Date(student.registeredAt);
+  const hoursSinceRegistration = (now - registeredAt) / (1000 * 60 * 60);
+
+  const lastReminder = student.lastSandboxReminderSent;
+  const hoursSinceLastReminder = lastReminder
+    ? (now - new Date(lastReminder)) / (1000 * 60 * 60)
+    : null;
+
+  const shouldRemind =
+    (hoursSinceRegistration >= 70 && !lastReminder) ||
+    (hoursSinceLastReminder && hoursSinceLastReminder >= 70);
+
+  if (shouldRemind) {
+    await sendWhatsApp(
+      student.whatsappNumber,
+      `🧞 EDUGENIE\n\nSANDBOX RENEWAL REQUIRED\n\nYour WhatsApp connection expires every 72 hours.\n\nTo keep receiving alerts send this message to +14155238886 on WhatsApp right now:\n\njoin light-type\n\nDo this immediately to avoid missing any assignment or deadline alerts.`
+    );
+    student.lastSandboxReminderSent = now;
+    await student.save();
+    logger.info(`  Sandbox renewal reminder sent to ${student.whatsappNumber}`);
+  }
+};
 
 const runPipeline = async () => {
   logger.info('═══════════════════════════════════════');
@@ -26,14 +99,51 @@ const runPipeline = async () => {
       try {
         logger.info(`───── Processing student: ${student._id} (${student.whatsappNumber}) ─────`);
 
-        // Determine which course IDs to use and build course name map
-        let courseIds;
-        const allCourses = await getMoodleCourses(student.moodleToken, student.moodleUrl);
+        // Step 0 — Validate Moodle token first
+        logger.info('Step 0: Validating Moodle token...');
+        const tokenCheck = await validateMoodleToken(student.moodleToken, student.moodleUrl);
+
+        if (!tokenCheck.valid) {
+          logger.error(`Skipping student ${student._id} — Invalid token: ${tokenCheck.error}`);
+
+          // Notify student their token is invalid
+          await sendWhatsApp(
+            student.whatsappNumber,
+            `🧞 EDUGENIE\n\nTOKEN EXPIRED\n\nYour Moodle API token is no longer valid.\nEduGenie cannot monitor your Moodle.\n\nTo fix this:\n1. Login to moodle.licet.ac.in\n2. Go to Preferences → Security Keys\n3. Generate a new token\n4. Re-register at EduGenie website\n\nYour monitoring has been paused.`
+          );
+
+          // Deactivate student
+          student.isActive = false;
+          await student.save();
+          continue;
+        }
+
+        // Step 1 — Fetch courses with timeout
+        let allCourses;
+        try {
+          allCourses = await Promise.race([
+            getMoodleCourses(student.moodleToken, student.moodleUrl),
+            new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('Moodle timeout after 15s')), 15000)
+            )
+          ]);
+        } catch (timeoutErr) {
+          logger.error(`  Moodle timeout for student ${student._id}: ${timeoutErr.message}`);
+          continue;
+        }
+
+        if (!allCourses || allCourses.length === 0) {
+          logger.warn(`No courses found for student ${student._id} — skipping`);
+          continue;
+        }
+
+        // Build course name map
         const courseNameMap = {};
         for (const c of allCourses) {
           courseNameMap[c.id] = c.fullname || c.shortname || c.displayname || 'Unknown Course';
         }
 
+        let courseIds;
         if (student.selectedCourseIds && student.selectedCourseIds.length > 0) {
           courseIds = student.selectedCourseIds.map(id => Number(id));
           logger.info(`Step 1: Using ${courseIds.length} pre-selected semester courses`);
@@ -73,10 +183,18 @@ const runPipeline = async () => {
               continue;
             }
 
+            // Try to extract actual notes/PDF for this item
+            const notes = await getNotesForItem(student, item, item.courseId);
+            if (notes) {
+              logger.info(`  Using actual course notes for AI generation (${notes.length} chars)`);
+            } else {
+              logger.info(`  No notes found — using topic title only for AI generation`);
+            }
+
             if (item.type === 'quiz') {
-              // Generate question bank
-              logger.info(`  → Generating question bank for quiz: "${item.title}"`);
-              const questionBank = await generateQuestionBank(item.title, item.courseName);
+              // Generate question bank (with notes if available)
+              logger.info(`  → Generating ${item.quizType || 'mcq'} question bank for quiz: "${item.title}"`);
+              const questionBank = await generateQuestionBank(item.title, item.courseName, notes, item.quizType || 'mcq');
 
               // WhatsApp — short alert
               logger.info(`  → Sending quiz WhatsApp alert to ${student.whatsappNumber}`);
@@ -88,10 +206,10 @@ const runPipeline = async () => {
                 await sendQuizEmail(student.email, item, questionBank);
               }
             } else if (item.type === 'assignment') {
-              // Generate study document
+              // Generate study document (with notes if available)
               const pageCount = extractPageCount(item.description);
               logger.info(`  → Generating study doc for assignment: "${item.title}" (${pageCount} pages)`);
-              const studyDoc = await generateStudyDocument(item.title, item.courseName, pageCount);
+              const studyDoc = await generateStudyDocument(item.title, item.courseName, pageCount, notes);
 
               // WhatsApp — short alert
               logger.info(`  → Sending assignment WhatsApp alert to ${student.whatsappNumber}`);
@@ -123,11 +241,16 @@ const runPipeline = async () => {
         logger.info('Step 6: Checking upcoming deadlines...');
         await checkDeadlineReminders(student);
 
+        // Step 7 — Check Twilio sandbox expiry
+        await checkSandboxExpiry(student);
+
       } catch (error) {
         logger.error(`Pipeline error for student ${student._id}: ${error.message}`);
         if (error.stack) {
           logger.error(`Stack: ${error.stack.split('\n').slice(0, 3).join(' → ')}`);
         }
+        // Continue to next student — never crash the whole pipeline
+        continue;
       }
     }
   } catch (error) {

@@ -57,10 +57,21 @@ const sendAssignmentAlert = async (to, assignment, studyMaterial) => {
 
 const sendQuizAlert = async (to, quiz, questionBank) => {
   const due = formatDate(quiz.dueDate);
+  const quizTypeLabel = quiz.quizType === 'mcq'
+    ? 'MULTIPLE CHOICE QUIZ'
+    : quiz.quizType === 'descriptive'
+    ? 'DESCRIPTIVE QUIZ'
+    : 'QUIZ';
+
+  const materialNote = quiz.quizType === 'mcq'
+    ? 'MCQ question bank sent to your email.'
+    : quiz.quizType === 'descriptive'
+    ? 'Descriptive questions sent to your email.'
+    : 'Question bank sent to your email.';
 
   const message = questionBank
-    ? `\u{1F9DE} EDUGENIE\n\nNEW QUIZ DETECTED\n${quiz.title}\nCourse: ${quiz.courseName}\nDue: ${due}\n\n${questionBank}`
-    : `\u{1F9DE} EDUGENIE\n\nNEW QUIZ DETECTED\n${quiz.title}\nCourse: ${quiz.courseName}\nDue: ${due}\n\nQuestion bank sent to your email.\nOpen it now and start preparing.`;
+    ? `\u{1F9DE} EDUGENIE\n\nNEW ${quizTypeLabel} DETECTED\n${quiz.title}\nCourse: ${quiz.courseName}\nDue: ${due}\n\n${questionBank}`
+    : `\u{1F9DE} EDUGENIE\n\nNEW ${quizTypeLabel} DETECTED\n${quiz.title}\nCourse: ${quiz.courseName}\nDue: ${due}\n\n${materialNote}\nOpen it now and start preparing.`;
 
   return await sendWhatsApp(to, message.trim());
 };
