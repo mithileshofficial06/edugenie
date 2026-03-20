@@ -1,11 +1,4 @@
-import google.generativeai as genai
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
-
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-model = genai.GenerativeModel("gemini-2.0-flash")
+from ai_provider import generate_content
 
 
 def generate_document(topic: str, course_name: str, page_count: int = 2, notes: str = None) -> str:
@@ -82,8 +75,8 @@ Use clear, student-friendly language. Include relevant examples where helpful.
 Note: This is AI-generated study material. Students should verify content with their professor and textbooks.
 """
 
-        response = model.generate_content(prompt)
-        return response.text
+        response = generate_content(prompt)
+        return response
 
     except Exception as e:
         print(f"[ERROR] Document generation failed: {e}")

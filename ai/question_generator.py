@@ -1,11 +1,4 @@
-import google.generativeai as genai
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
-
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-model = genai.GenerativeModel("gemini-2.0-flash")
+from ai_provider import generate_content
 
 
 def generate_questions(topic: str, course_name: str, notes: str = None, count: int = 10) -> str:
@@ -64,8 +57,8 @@ Include a mix of:
 Note: These are AI-generated practice questions. Students should verify answers with their professor.
 """
 
-        response = model.generate_content(prompt)
-        return response.text
+        response = generate_content(prompt)
+        return response
 
     except Exception as e:
         print(f"[ERROR] Question generation failed: {e}")

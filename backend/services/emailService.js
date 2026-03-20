@@ -47,6 +47,35 @@ const formatTime = (d) => {
   return dt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
 };
 
+/** Convert AI markdown output to clean, styled HTML for emails */
+const markdownToHtml = (text) => {
+  if (!text) return 'No content generated.';
+  return text
+    // Horizontal rules — remove
+    .replace(/^---+$/gm, '')
+    // Headers ### **text** or ### text — styled heading
+    .replace(/^#{1,4}\s*\*{0,2}(.+?)\*{0,2}\s*$/gm, '<div style="font-size:16px;font-weight:900;color:#00ffff;text-transform:uppercase;margin:20px 0 8px;border-bottom:1px solid #333;padding-bottom:6px;">$1</div>')
+    // Bold **text** or __text__
+    .replace(/\*\*(.+?)\*\*/g, '<strong style="color:#fff;">$1</strong>')
+    .replace(/__(.+?)__/g, '<strong style="color:#fff;">$1</strong>')
+    // Italic *text* or _text_ (single)
+    .replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em>$1</em>')
+    // Bullet points — styled list items
+    .replace(/^\s*[-•]\s+(.+)$/gm, '<div style="padding:3px 0 3px 16px;border-left:2px solid #333;">$1</div>')
+    // Question numbers Q1-Q10 — cyan highlight
+    .replace(/(Q\d+[\.\):])/gi, '<span style="color:#00ffff;font-weight:900;font-size:15px;">$1</span>')
+    // Answer/Explanation labels — green highlight
+    .replace(/(Answer:|Correct Answer:|ANSWER:|Explanation:|EXPLANATION:)/gi, '<span style="color:#00ff88;font-weight:700;">$1</span>')
+    // Option letters A) B) C) D) — subtle highlight
+    .replace(/^\s*([A-D][\)\.])/gm, '<span style="color:#aaa;font-weight:600;">$1</span>')
+    // Checkmark emoji ✅ — keep but style
+    .replace(/✅/g, '<span style="color:#00ff88;">✔</span>')
+    // Newlines to <br>
+    .replace(/\n/g, '<br>')
+    // Clean up multiple <br>s
+    .replace(/(<br>){3,}/g, '<br><br>');
+};
+
 /** Send helper with retry */
 const send = async (to, subject, html) => {
   try {
@@ -105,11 +134,8 @@ const sendQuizEmail = async (to, quiz, questionBank) => {
   const due = formatDate(quiz.dueDate);
   const time = formatTime(quiz.dueDate);
 
-  // Parse question bank text into formatted HTML
-  const formattedQB = (questionBank || 'No questions generated.')
-    .replace(/\n/g, '<br>')
-    .replace(/(Q\d+[\.\):])/gi, '<span style="color:#00ffff;font-weight:900;font-size:15px;">$1</span>')
-    .replace(/(A\d+[\.\):]|Answer:)/gi, '<span style="color:#00ff88;font-weight:700;">$1</span>');
+  // Parse question bank text into clean, formatted HTML
+  const formattedQB = markdownToHtml(questionBank);
 
   const html = wrap(`
     ${headerBlock('Quiz Preparation Material')}
@@ -160,11 +186,8 @@ const sendQuizEmail = async (to, quiz, questionBank) => {
 const sendAssignmentEmail = async (to, assignment, studyDoc) => {
   const due = formatDate(assignment.dueDate);
 
-  const formattedDoc = (studyDoc || 'No study material generated.')
-    .replace(/\n/g, '<br>')
-    .replace(/(#{1,3}\s*.+)/g, '<div style="font-size:16px;font-weight:900;color:#00ffff;text-transform:uppercase;margin:20px 0 8px;border-bottom:1px solid #333;padding-bottom:6px;">$1</div>')
-    .replace(/##\s*/g, '')
-    .replace(/#\s*/g, '');
+  // Parse study document into clean, formatted HTML
+  const formattedDoc = markdownToHtml(studyDoc);
 
   const html = wrap(`
     ${headerBlock('Assignment Study Material', '#8b5cf6')}

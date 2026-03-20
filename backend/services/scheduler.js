@@ -203,7 +203,16 @@ const runPipeline = async () => {
               // Email — full question bank
               if (student.email) {
                 logger.info(`  → Sending quiz email to ${student.email}`);
-                await sendQuizEmail(student.email, item, questionBank);
+                const emailSent = await sendQuizEmail(student.email, item, questionBank);
+
+                // WhatsApp — notify that email with MCQs has been sent
+                if (emailSent) {
+                  await sendWhatsApp(
+                    student.whatsappNumber,
+                    `🧞 EDUGENIE\n\n📧 STUDY MATERIAL SENT TO YOUR EMAIL\n\nQuiz: ${item.title}\nCourse: ${item.courseName}\n\nA full Mock Question Bank with ${questionBank ? '10' : '0'} practice questions has been sent to:\n${student.email}\n\nCheck your inbox now and start preparing!`
+                  );
+                  logger.info(`  → WhatsApp email notification sent for quiz: "${item.title}"`);
+                }
               }
             } else if (item.type === 'assignment') {
               // Generate study document (with notes if available)
@@ -218,7 +227,16 @@ const runPipeline = async () => {
               // Email — full study document
               if (student.email) {
                 logger.info(`  → Sending assignment email to ${student.email}`);
-                await sendAssignmentEmail(student.email, item, studyDoc);
+                const emailSent = await sendAssignmentEmail(student.email, item, studyDoc);
+
+                // WhatsApp — notify that email with study doc has been sent
+                if (emailSent) {
+                  await sendWhatsApp(
+                    student.whatsappNumber,
+                    `🧞 EDUGENIE\n\n📧 STUDY MATERIAL SENT TO YOUR EMAIL\n\nAssignment: ${item.title}\nCourse: ${item.courseName}\n\nA comprehensive Study Document has been sent to:\n${student.email}\n\nCheck your inbox now and start working on your assignment!`
+                  );
+                  logger.info(`  → WhatsApp email notification sent for assignment: "${item.title}"`);
+                }
               }
             } else {
               logger.info(`  → Skipping notes item: "${item.title}"`);
