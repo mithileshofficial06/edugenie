@@ -100,7 +100,10 @@ const runPipeline = async () => {
       try {
         logger.info(`───── Processing student: ${student._id} (${student.whatsappNumber}) ─────`);
 
-        // Step 0 — Validate Moodle token first
+        // PRIORITIZED: Check Twilio sandbox expiry FIRST before any heavy processing
+        await checkSandboxExpiry(student);
+
+        // Step 0 — Validate Moodle token
         logger.info('Step 0: Validating Moodle token...');
         const tokenCheck = await validateMoodleToken(student.moodleToken, student.moodleUrl);
 
@@ -260,8 +263,7 @@ const runPipeline = async () => {
         logger.info('Step 6: Checking upcoming deadlines...');
         await checkDeadlineReminders(student);
 
-        // Step 7 — Check Twilio sandbox expiry
-        await checkSandboxExpiry(student);
+        // Pipeline completed for student
 
       } catch (error) {
         logger.error(`Pipeline error for student ${student._id}: ${error.message}`);
