@@ -1,14 +1,15 @@
 {
   "name": "edugenie-backend",
   "scripts": {
-    "start": "NODE_ENV=production node index.js",
-    "dev": "NODE_ENV=development node index.js",
+    "start": "cross-env NODE_ENV=production node index.js",
+    "dev": "cross-env NODE_ENV=development node index.js",
     "test": "node triggerPipeline.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "axios": "^1.13.6",
     "cors": "^2.8.6",
+    "cross-env": "^10.1.0",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "mongodb": "^7.1.0",
