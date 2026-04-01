@@ -75,7 +75,7 @@ EduGenie is an **AI-powered academic assistant** that connects to your college M
 - Instant alerts for new assignments, quizzes, and resources
 - **"Study material sent to email"** notifications
 - Multi-tier deadline reminders: **3 days → 1 day → 2 hours**
-- Twilio sandbox renewal reminders (72-hour cycle)
+- **Smart Twilio Keep-Alive Ping** — Automatically drops a ping every 20 hours to bypass the strictly enforced WhatsApp 24-hour business session limit
 
 ### 🎨 Frontend
 - Brutalist dark design with neon accents
@@ -154,6 +154,7 @@ GEMINI_API_KEY=your_gemini_api_key
 cd backend
 npm install
 ```
+*(Note: Uses `cross-env` to ensure `npm run dev` works flawlessly across Windows, Mac, and Linux)*
 
 Create `backend/.env`:
 ```env
@@ -201,6 +202,8 @@ Student Registers
       ↓
 Scheduler Runs (every 2 hours)
       ↓
+Checks Twilio Sandbox Expiry (Pings at 20h to keep session alive)
+      ↓
 Fetches courses from Moodle
       ↓
 Detects new quizzes / assignments / resources
@@ -243,7 +246,8 @@ cd backend && node testEmailPipeline.js
 
 ## 🔮 Roadmap
 
-- [ ] Cloud deployment (Railway + Render) for 24/7 operation
+- [x] Bulletproof background task scheduler (Pings + Crons)
+- [x] Cloud deployment instructions (Render + Vercel)
 - [ ] Student dashboard with generated materials archive
 - [ ] `.docx` file support for text extraction
 - [ ] Assignment submission tracking
