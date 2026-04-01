@@ -33,3 +33,7 @@ registerTest.js
 triggerPipeline.js
 checkDB.js
 test.js
+testAI.js
+testEmailPipeline.js
+cleanup.js
+console.error(e))

@@ -9,9 +9,9 @@ const logger = require('../utils/logger');
 // POST /api/register
 router.post('/', async (req, res) => {
   try {
-    const { moodleToken, whatsappNumber, moodleUrl, semesterStart, semesterEnd, email } = req.body;
+    const { moodleToken, whatsappNumber, moodleUrl, semesterStart, semesterEnd, email, name } = req.body;
 
-    if (!moodleToken || !whatsappNumber || !email) {
+    if (!moodleToken || !whatsappNumber || !email || !name) {
       return res.status(400).json({
         success: false,
         message: 'Moodle token, WhatsApp number, and email are required'
@@ -60,6 +60,7 @@ router.post('/', async (req, res) => {
 
     // Save new student
     const student = new Student({
+      name,
       moodleToken,
       whatsappNumber,
       email,

@@ -68,17 +68,18 @@ const checkSandboxExpiry = async (student) => {
     : null;
 
   const shouldRemind =
-    (hoursSinceRegistration >= 70 && !lastReminder) ||
-    (hoursSinceLastReminder && hoursSinceLastReminder >= 70);
+    (hoursSinceRegistration >= 20 && !lastReminder) ||
+    (hoursSinceLastReminder && hoursSinceLastReminder >= 20);
 
   if (shouldRemind) {
+    const studentName = student.name || 'Student';
     await sendWhatsApp(
       student.whatsappNumber,
-      `🧞 EDUGENIE\n\nSANDBOX RENEWAL REQUIRED\n\nYour WhatsApp connection expires every 72 hours.\n\nTo keep receiving alerts send this message to +14155238886 on WhatsApp right now:\n\njoin light-type\n\nDo this immediately to avoid missing any assignment or deadline alerts.`
+      `🧞 EDUGENIE\n\nHi ${studentName},\n\nYour EduGenie WhatsApp connection needs a quick bump to stay active.\n\nPlease reply to this message right now with any word (like "Yes") to keep your daily alerts coming.\n\n(If you receive an error, send: join light-type)`
     );
     student.lastSandboxReminderSent = now;
     await student.save();
-    logger.info(`  Sandbox renewal reminder sent to ${student.whatsappNumber}`);
+    logger.info(`  Sandbox renewal reminder sent to ${student.whatsappNumber} (${studentName})`);
   }
 };
 

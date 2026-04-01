@@ -97,6 +97,7 @@ const slideUp = (delay) => ({
 /* ══════════════ APP ══════════════ */
 export default function App() {
   const [form, setForm] = useState({
+    name: '',
     moodleUrl: 'https://moodle.licet.ac.in',
     moodleToken: '',
     whatsappNumber: '+91',
@@ -135,7 +136,7 @@ export default function App() {
     setJoinCopied(true); setTimeout(() => setJoinCopied(false), 2000)
   }
 
-  const reset = () => { setResult(null); setForm({ moodleUrl: 'https://moodle.licet.ac.in', moodleToken: '', whatsappNumber: '+91', email: '', semesterStart: '', semesterEnd: '' }) }
+  const reset = () => { setResult(null); setForm({ name: '', moodleUrl: 'https://moodle.licet.ac.in', moodleToken: '', whatsappNumber: '+91', email: '', semesterStart: '', semesterEnd: '' }) }
 
   return (
     <div style={{ minHeight: '100vh', background: '#0a0a0a', color: '#fff', fontFamily: "'Space Grotesk', sans-serif" }}
@@ -221,6 +222,10 @@ export default function App() {
                   <motion.form key="f" onSubmit={submit} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                                style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                     {/* Staggered fields */}
+                    <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.7 }}>
+                      <Field label="Your Name" name="name" type="text" value={form.name} onChange={set}
+                             placeholder="John Doe" required />
+                    </motion.div>
                     <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.8 }}>
                       <Field label="Moodle URL" name="moodleUrl" type="url" value={form.moodleUrl} onChange={set}
                              placeholder="https://moodle.yourschool.edu" required />
