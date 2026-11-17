@@ -2,7 +2,7 @@
   <img src="https://img.shields.io/badge/EDUGENIE-AI%20Academic%20Intelligence-8b5cf6?style=for-the-badge&labelColor=0a0a0a" alt="EduGenie" />
 </p>
 
-<h1 align="center">🧞 EduGenie</h1>
+<h1 align="center">EduGenie</h1>
 
 <p align="center">
   <strong>Auto-monitors your Moodle · Generates AI study material · Delivers via Email + WhatsApp</strong>
@@ -19,20 +19,20 @@
 
 ---
 
-## 💡 What is EduGenie?
+## What is EduGenie?
 
 EduGenie is an **AI-powered academic assistant** that connects to your college Moodle LMS and works for you 24/7:
 
-1. 🔍 **Monitors** your Moodle courses every 2 hours for new assignments, quizzes, and resources
-2. 🤖 **Generates** mock question banks and study documents using AI (Mistral / Gemini)
-3. 📧 **Emails** you beautifully formatted study material
-4. 📱 **Alerts** you on WhatsApp with concise notifications and deadline reminders
+1. **Monitors** your Moodle courses every 2 hours for new assignments, quizzes, and resources
+2. **Generates** mock question banks and study documents using AI (Mistral / Gemini)
+3. **Emails** you beautifully formatted study material
+4. **Alerts** you on WhatsApp with concise notifications and deadline reminders
 
 > **You register once. EduGenie does the rest.**
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 ┌────────────────┐     ┌─────────────────┐     ┌──────────────┐
@@ -51,33 +51,33 @@ EduGenie is an **AI-powered academic assistant** that connects to your college M
 
 ---
 
-## ✨ Features
+## Features
 
-### 📡 Moodle Integration
+### Moodle Integration
 - Auto-syncs with your Moodle every 2 hours
 - Detects new assignments, quizzes, and uploaded resources
 - Smart semester-based course filtering
 - Token validation with auto-deactivation on expiry
 
-### 🤖 AI Content Generation
+### AI Content Generation
 - **Mock Question Banks** — 10 practice MCQs per quiz (with answers + explanations)
 - **Study Documents** — structured notes with key concepts, examples, and practice questions
 - **Dual AI provider** — Mistral AI (primary) + Google Gemini (fallback)
 - Switchable via `.env` — `AI_PROVIDER=mistral` or `AI_PROVIDER=gemini`
 - PDF text extraction from Moodle resources for context-aware generation
 
-### 📧 Email Delivery
+### Email Delivery
 - 4 dark-themed HTML email templates (Welcome, Quiz, Assignment, Notes)
 - Clean markdown-to-HTML conversion — no raw `##` or `**` in emails
 - Retry mechanism with exponential backoff
 
-### 📱 WhatsApp Alerts
+### WhatsApp Alerts
 - Instant alerts for new assignments, quizzes, and resources
 - **"Study material sent to email"** notifications
 - Multi-tier deadline reminders: **3 days → 1 day → 2 hours**
-- **Smart Twilio Keep-Alive Ping** — Automatically drops a ping every 20 hours to bypass the strictly enforced WhatsApp 24-hour business session limit
+- **Session keep-alive** — sends a check-in every 20 hours so the Twilio WhatsApp sandbox session does not lapse between alerts
 
-### 🎨 Frontend
+### Frontend
 - Brutalist dark design with neon accents
 - Particle background + Framer Motion animations
 - Step-by-step guides for Moodle token & WhatsApp setup
@@ -85,7 +85,7 @@ EduGenie is an **AI-powered academic assistant** that connects to your college M
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 edugenie/
@@ -117,7 +117,7 @@ edugenie/
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 - **Node.js** 18+
@@ -130,7 +130,7 @@ edugenie/
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-username/edugenie.git
+git clone https://github.com/mithileshofficial06/edugenie.git
 cd edugenie
 ```
 
@@ -154,7 +154,7 @@ GEMINI_API_KEY=your_gemini_api_key
 cd backend
 npm install
 ```
-*(Note: Uses `cross-env` to ensure `npm run dev` works flawlessly across Windows, Mac, and Linux)*
+`npm run dev` uses `cross-env`, so it works the same on Windows, macOS and Linux.
 
 Create `backend/.env`:
 ```env
@@ -191,18 +191,18 @@ cd backend && node index.js
 cd frontend && npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173) and register!
+Open http://localhost:5173 and register.
 
 ---
 
-## 🔄 How the Pipeline Works
+## How the Pipeline Works
 
 ```
 Student Registers
       ↓
 Scheduler Runs (every 2 hours)
       ↓
-Checks Twilio Sandbox Expiry (Pings at 20h to keep session alive)
+Checks the Twilio sandbox session (check-in at 20h)
       ↓
 Fetches courses from Moodle
       ↓
@@ -219,7 +219,7 @@ Tracks deadlines → Sends reminders (3d → 1d → 2h)
 
 ---
 
-## 🧪 Testing
+## Testing
 
 ```bash
 # Test AI generation pipeline
@@ -231,7 +231,7 @@ cd backend && node testEmailPipeline.js
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Layer | Technologies |
 |-------|-------------|
@@ -244,24 +244,11 @@ cd backend && node testEmailPipeline.js
 
 ---
 
-## 🔮 Roadmap
+## Roadmap
 
 - [x] Bulletproof background task scheduler (Pings + Crons)
-- [x] Cloud deployment instructions (Render + Vercel)
 - [ ] Student dashboard with generated materials archive
 - [ ] `.docx` file support for text extraction
 - [ ] Assignment submission tracking
 - [ ] Multi-institution support
 - [ ] Auto-fallback between AI providers based on quota
-
----
-
-## 📄 License
-
-This project is open source and available under the [MIT License](LICENSE).
-
----
-
-<p align="center">
-  <strong>EduGenie</strong> — Built for students who refuse to fall behind.
-</p>
